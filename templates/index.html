@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">Список пользователей</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>ФИО</th>
+                <th>Роль</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                    {{ user.surname or '' }} {{ user.name }} {{ user.patronymic or '' }}
+                </td>
+                <td>{{ user.role.name if user.role else 'Не указана' }}</td>
+                <td>
+                    <a href="{{ url_for('view_user', user_id=user.id) }}" class="btn btn-sm btn-info">Просмотр</a>
+                    {% if session.user_id %}
+                        <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-sm btn-warning">Редактировать</a>
+                        <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Вы уверены, что хотите удалить этого пользователя?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if session.user_id %}
+<div class="mt-3">
+    <a href="{{ url_for('create_user') }}" class="btn btn-primary">Создание пользователя</a>
+</div>
+{% endif %}
+{% endblock %}
