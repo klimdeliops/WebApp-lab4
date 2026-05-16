@@ -79,6 +79,9 @@ def login_required(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
+def is_admin():
+    user = User.query.get(session['user_id'])
+    return user and user.role and user.role.name == 'admin'
 
 # Маршруты аутентификации
 @app.route('/login', methods=['GET', 'POST'])
@@ -109,6 +112,7 @@ def logout():
 
 @app.route('/change-password', methods=['GET', 'POST'])
 @login_required
+
 def change_password():
     if request.method == 'POST':
         old_password = request.form.get('old_password')
@@ -141,9 +145,23 @@ def change_password():
 
 # Основные маршруты CRUD
 @app.route('/')
+@app.route('/')
 def index():
     users = User.query.all()
-    return render_template('index.html', users=users)
+
+    current_user = None
+    is_admin_user = False
+
+    if 'user_id' in session:
+        current_user = User.query.get(session['user_id'])
+        if current_user and current_user.role:
+            is_admin_user = current_user.role.name == 'admin'
+
+    return render_template(
+        'index.html',
+        users=users,
+        is_admin_user=is_admin_user
+    )
 
 
 @app.route('/user/<int:user_id>')
@@ -155,6 +173,10 @@ def view_user(user_id):
 @app.route('/user/create', methods=['GET', 'POST'])
 @login_required
 def create_user():
+    if not is_admin():
+        flash('Только администратор может создавать пользователей', 'danger')
+        return redirect(url_for('index'))
+    
     roles = Role.query.all()
 
     if request.method == 'POST':
@@ -263,12 +285,34 @@ def edit_user(user_id):
 @app.route('/user/delete/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user_to_delete = User.query.get_or_404(user_id)
+    current_user = User.query.get(session['user_id'])
+
+    # Проверка прав: только админ или сам себя
+    if not is_admin() and user_to_delete.id != current_user.id:
+        flash('Вы можете удалить только себя или должны быть администратором', 'danger')
+        return redirect(url_for('index'))
+
+    # Запрет удаления последнего администратора
+    if user_to_delete.role and user_to_delete.role.name == 'admin':
+        admin_count = User.query.join(Role).filter(Role.name == 'admin').count()
+
+        if admin_count <= 1:
+            flash('Нельзя удалить последнего администратора', 'danger')
+            return redirect(url_for('index'))
 
     try:
-        db.session.delete(user)
+        db.session.delete(user_to_delete)
         db.session.commit()
+
+        # Если пользователь удалил сам себя → разлогинить
+        if user_to_delete.id == current_user.id:
+            session.clear()
+            flash('Ваш аккаунт удалён', 'info')
+            return redirect(url_for('index'))
+
         flash('Пользователь успешно удалён', 'success')
+
     except Exception as e:
         db.session.rollback()
         flash(f'Ошибка при удалении пользователя: {str(e)}', 'danger')
