@@ -333,6 +333,20 @@
             font-size: 0.8rem;
             margin-left: 10px;
         }
+
+        .navbar-toggler {
+            border: 2px solid var(--highlight);
+            border-radius: 8px;
+            padding: 5px 10px;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(74,144,226,1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+        }
     </style>
 </head>
 <body>
@@ -414,7 +428,7 @@
                                 <button type="button" class="btn btn-custom-secondary" data-bs-dismiss="modal">
                                     <i class="fas fa-times"></i> Нет
                                 </button>
-                                <form action="{{ url_for('delete_user', user_id=0) }}".replace('0', userId) method="POST" style="display: inline;">
+                                <form action="{{ url_for('delete_user', user_id=0) }}" method="POST" style="display: inline;">
                                     <button type="submit" class="btn btn-custom-danger">
                                         <i class="fas fa-trash-alt"></i> Да, удалить
                                     </button>
@@ -434,7 +448,7 @@
             
             const form = document.querySelector('#deleteModal form');
             if (form) {
-                form.action = form.action.replace('0', userId);
+                form.action = form.action.replace(/\/0$/, '/' + userId);
             }
             
             const modal = new bootstrap.Modal(document.getElementById('deleteModal'));

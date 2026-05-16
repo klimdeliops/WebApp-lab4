@@ -27,12 +27,11 @@
           >
           {% if session.user_id %} {% if is_admin_user or session.user_id ==
           user.id %}
-          <form
-            method="POST"
-            action="{{ url_for('delete_user', user_id=user.id) }}"
-          >
-            <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
-          </form>
+          <button
+            type="button"
+            class="btn btn-sm btn-danger"
+            onclick="confirmDelete({{ user.id }}, '{{ user.surname or '' }} {{ user.name }}')"
+          >Удалить</button>
           {% endif %} {% endif %}
         </td>
       </tr>
